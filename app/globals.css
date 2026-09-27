@@ -115,4 +115,20 @@ button:disabled { opacity: 0.6; cursor: wait; }
 .muted { color: var(--muted); font-size: 0.93rem; }
 .action { font-size: 0.93rem; margin-top: 2px; }
 .letter p { margin: 0 0 12px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+.tab.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.grid3 { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 16px; margin-top: 14px; }
+@media (max-width: 720px) { .grid3 { grid-template-columns: 1fr; } }
+label.check { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 0.93rem; }
+label.check input { width: auto; }
+.start { margin-bottom: 6px; }
+[hidden] { display: none !important; }
 footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 24px; }

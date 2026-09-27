@@ -165,8 +165,27 @@ function TailorResults({ r }) {
   );
 }
 
-function TailorTool() {
-  const [cv, setCv] = useState("");
+function Loading({ message }) {
+  return (
+    <div className="card loading" role="status">
+      <div className="spinner" aria-hidden="true" />
+      <div>
+        <strong>{message}</strong>
+        <div className="muted">This usually takes 5-20 seconds.</div>
+      </div>
+    </div>
+  );
+}
+
+function ErrorBox({ message }) {
+  return (
+    <div className="card error" role="alert">
+      <strong>Sorry, that didn&apos;t work.</strong> {message}
+    </div>
+  );
+}
+
+function TailorTool({ cv, setCv }) {
   const [job, setJob] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -231,34 +250,167 @@ function TailorTool() {
         </div>
       </form>
 
-      {loading ? (
-        <div className="card loading" role="status">
-          <div className="spinner" aria-hidden="true" />
-          <div>
-            <strong>Reading your CV and the job…</strong>
-            <div className="muted">This usually takes 5-20 seconds.</div>
-          </div>
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="card error" role="alert">
-          <strong>Sorry, that didn&apos;t work.</strong> {error}
-        </div>
-      ) : null}
-
+      {loading ? <Loading message="Reading your CV and the job…" /> : null}
+      {error ? <ErrorBox message={error} /> : null}
       {result ? <TailorResults r={result} /> : null}
     </>
   );
 }
 
+function BridgeTool({ cv }) {
+  const [skills, setSkills] = useState("");
+  const [city, setCity] = useState("");
+  const [hours, setHours] = useState("15");
+  const [hasVehicle, setHasVehicle] = useState(false);
+  const [useCv, setUseCv] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState(null);
+  const hasCv = cv.trim().length > 0;
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setResult(null);
+    try {
+      setResult(
+        await postJson("/api/bridge", {
+          skills,
+          city,
+          hours: Number(hours),
+          hasVehicle,
+          cv: hasCv && useCv ? cv : "",
+        })
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <form onSubmit={onSubmit} className="card">
+        <p className="muted" style={{ marginTop: 0 }}>
+          Need money coming in while you job-hunt? Get 3-5 realistic short-term income ideas you could start
+          this week.
+        </p>
+        <label>
+          <span>Your skills</span>
+          <textarea
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            placeholder="e.g. customer service, Excel, speak Spanish, good with kids, basic DIY"
+            rows={3}
+            maxLength={2000}
+            required={!(hasCv && useCv)}
+          />
+        </label>
+        {hasCv ? (
+          <label className="check">
+            <input type="checkbox" checked={useCv} onChange={(e) => setUseCv(e.target.checked)} />
+            Also use the CV I pasted in the &quot;Tailor my CV&quot; tab
+          </label>
+        ) : null}
+        <div className="grid3">
+          <label>
+            <span>City or town</span>
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Manchester"
+              maxLength={100}
+              required
+            />
+          </label>
+          <label>
+            <span>Hours free per week</span>
+            <input
+              type="number"
+              min={1}
+              max={80}
+              value={hours}
+              onChange={(e) => setHours(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            <span>Do you have a vehicle?</span>
+            <select value={hasVehicle ? "yes" : "no"} onChange={(e) => setHasVehicle(e.target.value === "yes")}>
+              <option value="no">No</option>
+              <option value="yes">Yes (car, van or motorbike)</option>
+            </select>
+          </label>
+        </div>
+        <div className="actions">
+          <button type="submit" className="primary" disabled={loading}>
+            {loading ? "Finding options…" : "Find bridge income"}
+          </button>
+          <button
+            type="button"
+            className="link"
+            disabled={loading}
+            onClick={() => {
+              setSkills("Customer service, Zendesk, Excel, training new staff, cash handling, stock counts");
+              setCity("Manchester");
+              setHours("15");
+              setHasVehicle(false);
+            }}
+          >
+            Fill with example
+          </button>
+        </div>
+      </form>
+
+      {loading ? <Loading message="Looking for options near you…" /> : null}
+      {error ? <ErrorBox message={error} /> : null}
+      {result ? (
+        <div className="results" aria-live="polite">
+          <p className="review-note">
+            ⚠️ These are AI suggestions, not live job listings. Earnings are rough estimates. Check each option
+            yourself, and never pay upfront fees to start work.
+          </p>
+          {result.options.map((o, i) => (
+            <section className="card" key={i}>
+              <h2>
+                <span className="badge">{i + 1}</span> {o.title}
+              </h2>
+              {o.whyItFits ? <p>{o.whyItFits}</p> : null}
+              {o.estimatedEarnings ? (
+                <p className="muted">
+                  <strong>Rough earnings:</strong> {o.estimatedEarnings}
+                </p>
+              ) : null}
+              <p className="start">
+                <strong>How to start:</strong> {o.howToStart}
+              </p>
+              {o.watchOut ? <p className="muted">Watch out: {o.watchOut}</p> : null}
+            </section>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+const TABS = [
+  { id: "tailor", label: "1. Tailor my CV" },
+  { id: "bridge", label: "2. Bridge income" },
+];
+
 export default function Home() {
+  const [tab, setTab] = useState("tailor");
+  // The CV is the shared profile: pasted once, used by both tools.
+  const [cv, setCv] = useState("");
+
   return (
     <main>
       <header>
         <h1>RampWay</h1>
         <p className="tagline">
-          Tailor your CV to any job in seconds: rewrite, skills gap, cover letter and interview prep.
+          Tailor your CV to any job in seconds, and find short-term income to bridge the gap while you search.
         </p>
       </header>
 
@@ -268,7 +420,28 @@ export default function Home() {
         biased or wrong: always review and edit the output yourself before sending anything to an employer.
       </aside>
 
-      <TailorTool />
+      <nav className="tabs" role="tablist">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            className={tab === t.id ? "tab active" : "tab"}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Both tools stay mounted so switching tabs keeps what you typed. */}
+      <div hidden={tab !== "tailor"}>
+        <TailorTool cv={cv} setCv={setCv} />
+      </div>
+      <div hidden={tab !== "bridge"}>
+        <BridgeTool cv={cv} />
+      </div>
 
       <footer>Built for a hackathon · AI model: gpt-oss-120b via Groq · Nothing you type is saved.</footer>
     </main>
