@@ -736,6 +736,22 @@ const BRIDGE_STEPS = [
   "Writing a first step for each option",
 ];
 
+// Links to live job searches for one suggestion. We don't copy or store postings: each link opens
+// the job site's own current results for the AI's search phrase in the user's city.
+const INDEED_HOSTS = { MA: "ma", GB: "uk", FR: "fr", US: "www", CA: "ca", DE: "de", ES: "es", NG: "ng", AE: "ae", IN: "in" };
+function jobSearchLinks(query, city, countryCode) {
+  const q = encodeURIComponent(query);
+  const l = encodeURIComponent(city || "");
+  const links = [];
+  if (countryCode === "MA") {
+    links.push({ label: "Rekrute", href: `https://www.rekrute.com/offres.html?keyword=${q}` });
+  }
+  links.push({ label: "Indeed", href: `https://${INDEED_HOSTS[countryCode] || "www"}.indeed.com/jobs?q=${q}&l=${l}` });
+  links.push({ label: "LinkedIn", href: `https://www.linkedin.com/jobs/search/?keywords=${q}&location=${l}` });
+  links.push({ label: "Google Jobs", href: `https://www.google.com/search?q=${encodeURIComponent(`${query} ${city || ""}`.trim())}&ibp=htl;jobs` });
+  return links;
+}
+
 function BridgeTool({ cv }) {
   const [skills, setSkills] = useState("");
   const [city, setCity] = useState("");
@@ -891,8 +907,9 @@ function BridgeTool({ cv }) {
             <div className="review">
               <span className="review-icon">{Icon.scale}</span>
               <p>
-                <strong>Ideas, not job listings.</strong> Check each one yourself. Pay figures are rough estimates, and
-                you should never pay an upfront fee to start work.
+                <strong>Ideas, with links to live job searches.</strong> The links open current postings on real job
+                sites; check each one yourself. Pay figures are rough estimates, and you should never pay an upfront
+                fee to start work.
                 {result.usedBackup ? <BackupNote /> : null}
               </p>
             </div>
@@ -914,6 +931,14 @@ function BridgeTool({ cv }) {
                     </span>
                   </p>
                   {o.watchOut ? <p className="muted small">Watch out: {o.watchOut}</p> : null}
+                  <div className="job-links">
+                    <span className="mono">Live postings</span>
+                    {jobSearchLinks(o.searchQuery, result.city, result.countryCode).map((l) => (
+                      <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer">
+                        {l.label} <span aria-hidden="true">↗</span>
+                      </a>
+                    ))}
+                  </div>
                 </Reveal>
               ))}
             </div>
@@ -924,7 +949,7 @@ function BridgeTool({ cv }) {
             items={[
               ["→", "3–5 options", "Matched to your skills, city, hours and whether you have a vehicle."],
               ["→", "A first step for each", "One concrete thing to do today or tomorrow."],
-              ["→", "Honest caveats", "Fees, checks or permits to know about before you start."],
+              ["→", "Live job links", "Each option links to current postings on Rekrute, Indeed, LinkedIn and Google Jobs."],
             ]}
           />
         ) : null}

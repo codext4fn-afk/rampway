@@ -31,9 +31,11 @@ Rules:
 
 Respond with ONLY a JSON object of exactly this shape:
 {
+  "countryCode": "ISO 3166-1 alpha-2 code of the city's country, e.g. MA",
   "options": [
     {
       "title": "short name of the option",
+      "searchQuery": "2-4 job-title words to type into a job board to find current postings for this option. NO city name. ALWAYS in the language job adverts in that city are written in, even if the rest of your answer is in English: in Morocco that is French (e.g. 'conseiller clientèle', 'caissier', 'livreur vélo')",
       "whyItFits": "one sentence linking it to their skills/situation",
       "estimatedEarnings": "see the earnings rule above",
       "howToStart": "one concrete first step",
@@ -79,6 +81,12 @@ export const POST = jsonRoute(async (body) => {
       whyItFits: str(o?.whyItFits),
       estimatedEarnings: str(o?.estimatedEarnings),
       howToStart: str(o?.howToStart),
+      // The city is added to the search separately, so strip it from the phrase if the model included it.
+      searchQuery: (str(o?.searchQuery) || str(o?.title))
+        .replace(new RegExp(city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 60),
       watchOut: str(o?.watchOut),
     }))
     .filter((o) => o.title && o.howToStart)
@@ -87,5 +95,7 @@ export const POST = jsonRoute(async (body) => {
   if (options.length === 0) {
     throw new UserFacingError("The AI didn't return any suggestions. Please try again.", 502);
   }
-  return { options, usedBackup: out._usedBackup === true };
+  // The page turns these into links to live job searches (Rekrute, Indeed, LinkedIn, Google Jobs).
+  const cc = str(out.countryCode).toUpperCase();
+  return { options, city, countryCode: /^[A-Z]{2}$/.test(cc) ? cc : "", usedBackup: out._usedBackup === true };
 });
