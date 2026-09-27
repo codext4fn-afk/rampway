@@ -185,6 +185,103 @@ function ErrorBox({ message }) {
   );
 }
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+async function extractCvText(file) {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error("This file is over 4 MB. Try exporting your CV again as a PDF without images, or paste the text below.");
+  }
+  if (!/\.(pdf|docx)$/i.test(file.name)) {
+    throw new Error(
+      /\.doc$/i.test(file.name)
+        ? "Old .doc files aren't supported. In Word, use File → Save As → .docx or PDF, or paste your CV text below."
+        : "Please upload a PDF or Word (.docx) file, or paste your CV text below."
+    );
+  }
+  const form = new FormData();
+  form.append("file", file);
+  let res;
+  try {
+    res = await fetch("/api/extract", { method: "POST", body: form });
+  } catch {
+    throw new Error("Couldn't upload the file. Check your internet connection, or paste your CV text below.");
+  }
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    // Non-JSON response, e.g. the platform rejected a too-large upload.
+  }
+  if (res.status === 413 && !data) throw new Error("This file is too large. Please paste your CV text below instead.");
+  if (!res.ok || !data) throw new Error(data?.error || "We couldn't read this file. Please paste your CV text below instead.");
+  return data;
+}
+
+function UploadBox({ onText, disabled }) {
+  const [status, setStatus] = useState({ kind: "idle" });
+  const [dragging, setDragging] = useState(false);
+
+  async function handle(file) {
+    if (!file) return;
+    setStatus({ kind: "busy", name: file.name });
+    try {
+      const { text, words, truncated } = await extractCvText(file);
+      onText(text);
+      setStatus({ kind: "ok", name: file.name, words, truncated });
+    } catch (err) {
+      setStatus({ kind: "error", message: err.message });
+    }
+  }
+
+  const busy = status.kind === "busy";
+  return (
+    <div className="upload">
+      <label
+        className={`dropzone${dragging ? " dragging" : ""}${busy || disabled ? " busy" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          if (!busy && !disabled) handle(e.dataTransfer.files?.[0]);
+        }}
+      >
+        <input
+          type="file"
+          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          disabled={busy || disabled}
+          onChange={(e) => {
+            handle(e.target.files?.[0]);
+            e.target.value = ""; // allow re-selecting the same file
+          }}
+        />
+        {busy ? (
+          <span>Reading {status.name}…</span>
+        ) : (
+          <span>
+            <strong>Upload your CV</strong> (PDF or Word .docx, up to 4 MB), or drop it here
+          </span>
+        )}
+      </label>
+      {status.kind === "ok" ? (
+        <p className="upload-msg ok" role="status">
+          ✓ Read {status.words} words from <strong>{status.name}</strong>
+          {status.truncated ? " (trimmed to fit)" : ""}. Check the text below and fix anything that looks wrong
+          before you submit. The file itself wasn&apos;t saved.
+        </p>
+      ) : null}
+      {status.kind === "error" ? (
+        <p className="upload-msg bad" role="alert">
+          {status.message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function TailorTool({ cv, setCv }) {
   const [job, setJob] = useState("");
   const [loading, setLoading] = useState(false);
@@ -209,17 +306,21 @@ function TailorTool({ cv, setCv }) {
     <>
       <form onSubmit={onSubmit} className="card">
         <div className="grid2">
-          <label>
-            <span>Your CV</span>
+          <div className="field">
+            <label htmlFor="cv-text">
+              <span>Your CV</span>
+            </label>
+            <UploadBox onText={setCv} disabled={loading} />
             <textarea
+              id="cv-text"
               value={cv}
               onChange={(e) => setCv(e.target.value)}
-              placeholder="Paste your CV text here…"
+              placeholder="…or paste your CV text here"
               rows={14}
               maxLength={20000}
               required
             />
-          </label>
+          </div>
           <label>
             <span>Job description</span>
             <textarea

@@ -131,4 +131,22 @@ label.check { display: flex; gap: 8px; align-items: center; margin-top: 10px; fo
 label.check input { width: auto; }
 .start { margin-bottom: 6px; }
 [hidden] { display: none !important; }
+.field > label span { display: block; font-weight: 600; margin-bottom: 6px; }
+.upload { margin-bottom: 10px; }
+.dropzone {
+  display: block;
+  position: relative;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  font-size: 0.93rem;
+  cursor: pointer;
+}
+.dropzone:hover, .dropzone.dragging { border-color: var(--accent); }
+.dropzone.busy { cursor: wait; opacity: 0.7; }
+.dropzone input { position: absolute; inset: 0; opacity: 0; cursor: inherit; width: 100%; }
+.upload-msg { font-size: 0.88rem; margin: 8px 0 0; padding: 8px 10px; border-radius: 6px; }
+.upload-msg.ok { background: var(--warn-bg); border: 1px solid var(--warn-border); }
+.upload-msg.bad { background: var(--err-bg); border: 1px solid var(--err-border); }
 footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 24px; }
