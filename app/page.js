@@ -159,6 +159,17 @@ function CopyButton({ text, label = "Copy" }) {
   );
 }
 
+// Shown when the main model was busy and the smaller backup model answered instead.
+function BackupNote() {
+  return (
+    <span className="backup-note">
+      {" "}
+      Our main AI model was busy, so a smaller backup model answered. It follows our honesty rules less
+      reliably, so check this one extra carefully.
+    </span>
+  );
+}
+
 function ErrorBox({ message }) {
   return (
     <div className="alert" role="alert">
@@ -380,6 +391,7 @@ function TailorResults({ r }) {
         <p>
           <strong>Review before you send.</strong> Check every claim is true, and fill in any{" "}
           <code>[placeholders]</code> with real numbers. AI can make mistakes or reflect bias.
+          {r.usedBackup ? <BackupNote /> : null}
         </p>
       </div>
 
@@ -718,6 +730,7 @@ function BridgeTool({ cv }) {
               <p>
                 <strong>Ideas, not job listings.</strong> Check each one yourself. Pay figures are rough estimates, and
                 you should never pay an upfront fee to start work.
+                {result.usedBackup ? <BackupNote /> : null}
               </p>
             </div>
             <div className="options">

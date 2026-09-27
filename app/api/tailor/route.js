@@ -17,9 +17,18 @@ Rules:
     and do not merge in duties the CV doesn't mention. It is fine to have fewer bullets.
   - Do not upgrade a skill (e.g. CV says "Excel" -> do not claim "pivot tables" or "advanced Excel").
     If the job needs the upgraded version, list it in skillsGap instead.
+  - NO INVENTED RESULTS OR IMPACT. Do not add outcome clauses such as "improving onboarding speed",
+    "reducing escalations", "maintaining high satisfaction", "streamlining processes" or "improving
+    team performance" unless the CV states that outcome. Instead, end the bullet with a placeholder
+    the user must fill in honestly, e.g. "Trained 5 new starters on call scripts [add result, e.g. time to competence]".
   - If a number would help but isn't in the CV, write a placeholder like [X%] so the user fills it in honestly.
-  - The cover letter must follow the same rules. For missing skills, express willingness to learn;
-    never claim the candidate has already started a course or training.
+  - NO INVENTED SOFT CLAIMS. Do not say the candidate "analysed", "collaborated with teams", "identified
+    patterns", "drove improvements" or similar unless the CV says so.
+  - The cover letter must follow the same rules, sentence by sentence. It may only describe what the
+    candidate did (from the CV) and why they want this job. For missing skills, say they are keen to
+    learn; never claim or promise courses, training, plans or steps already taken.
+  - Before answering, re-read every sentence of the summary, bullets and cover letter and delete or
+    rewrite any claim you cannot point to in the CV.
 - Do not infer or mention age, gender, ethnicity, religion, disability, nationality, family status
   or other protected characteristics, and do not let them influence your advice.
 - Use plain, professional English. No clichés like "synergy" or "rockstar".
@@ -58,10 +67,12 @@ export const POST = jsonRoute(async (body) => {
   const out = await askGroqForJson({
     system: SYSTEM,
     user: `<cv>\n${cv}\n</cv>\n\n<job_description>\n${job}\n</job_description>`,
-    maxTokens: 5000,
+    maxTokens: 4500,
+    reasoningEffort: "medium",
   });
 
   const result = {
+    usedBackup: out._usedBackup === true,
     tailoredSummary: str(out.tailoredSummary),
     tailoredExperience: arr(out.tailoredExperience)
       .map((r) => ({ role: str(r?.role), bullets: arr(r?.bullets).map(str).filter(Boolean) }))

@@ -66,7 +66,7 @@ export const POST = jsonRoute(async (body) => {
   const out = await askGroqForJson({
     system: SYSTEM,
     user: `<profile>\n${profile}\n</profile>${cv ? `\n\n<cv>\n${cv}\n</cv>` : ""}`,
-    maxTokens: 4000,
+    maxTokens: 3000,
     reasoningEffort: "medium",
   });
 
@@ -84,5 +84,5 @@ export const POST = jsonRoute(async (body) => {
   if (options.length === 0) {
     throw new UserFacingError("The AI didn't return any suggestions. Please try again.", 502);
   }
-  return { options };
+  return { options, usedBackup: out._usedBackup === true };
 });
