@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const EXAMPLE_CV = `Jordan Lee
 jordan.lee@example.com
@@ -41,6 +41,8 @@ You have:
 - Clear written and verbal communication
 - Nice to have: experience with Looker or another BI tool`;
 
+/* ---------- network helpers ---------- */
+
 async function postJson(url, payload) {
   let res;
   try {
@@ -62,127 +64,6 @@ async function postJson(url, payload) {
     throw new Error(data?.error || "The request took too long or failed. Please try again.");
   }
   return data;
-}
-
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      type="button"
-      className="copy"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        } catch {
-          // Clipboard blocked by the browser; nothing useful to do.
-        }
-      }}
-    >
-      {copied ? "Copied ✓" : "Copy"}
-    </button>
-  );
-}
-
-function Section({ letter, title, copyText, children }) {
-  return (
-    <section className="card">
-      <div className="card-head">
-        <h2>
-          <span className="badge">{letter}</span> {title}
-        </h2>
-        {copyText ? <CopyButton text={copyText} /> : null}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function TailorResults({ r }) {
-  const cvText = [
-    r.tailoredSummary,
-    ...r.tailoredExperience.map((e) => `${e.role}\n${e.bullets.map((b) => `- ${b}`).join("\n")}`),
-  ].join("\n\n");
-
-  return (
-    <div className="results" aria-live="polite">
-      <p className="review-note">
-        ⚠️ Review everything below before sending it to an employer. Check every claim is true and fill in any{" "}
-        <code>[placeholders]</code>.
-      </p>
-
-      <Section letter="A" title="Tailored CV" copyText={cvText}>
-        <h3>Summary</h3>
-        <p>{r.tailoredSummary}</p>
-        {r.tailoredExperience.map((e, i) => (
-          <div key={i}>
-            <h3>{e.role}</h3>
-            <ul>
-              {e.bullets.map((b, j) => (
-                <li key={j}>{b}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </Section>
-
-      <Section letter="B" title="Skills gap">
-        {r.skillsGap.length === 0 ? (
-          <p>No significant gaps found. Your CV covers the main requirements.</p>
-        ) : (
-          <ul>
-            {r.skillsGap.map((g, i) => (
-              <li key={i}>
-                <strong>{g.skill}</strong>
-                {g.why ? <span className="muted"> - {g.why}</span> : null}
-                {g.howToAddress ? <div className="action">→ {g.howToAddress}</div> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="C" title="Cover letter draft" copyText={r.coverLetter}>
-        <div className="letter">
-          {r.coverLetter.split(/\n{2,}/).map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
-        </div>
-      </Section>
-
-      <Section letter="D" title="Likely interview questions">
-        <ol>
-          {r.interviewQuestions.map((q, i) => (
-            <li key={i}>
-              <strong>{q.question}</strong>
-              {q.tip ? <div className="muted">Tip: {q.tip}</div> : null}
-            </li>
-          ))}
-        </ol>
-      </Section>
-    </div>
-  );
-}
-
-function Loading({ message }) {
-  return (
-    <div className="card loading" role="status">
-      <div className="spinner" aria-hidden="true" />
-      <div>
-        <strong>{message}</strong>
-        <div className="muted">This usually takes 5-20 seconds.</div>
-      </div>
-    </div>
-  );
-}
-
-function ErrorBox({ message }) {
-  return (
-    <div className="card error" role="alert">
-      <strong>Sorry, that didn&apos;t work.</strong> {message}
-    </div>
-  );
 }
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -216,6 +97,120 @@ async function extractCvText(file) {
   if (!res.ok || !data) throw new Error(data?.error || "We couldn't read this file. Please paste your CV text below instead.");
   return data;
 }
+
+/* ---------- icons (inline so there are no extra requests) ---------- */
+
+const Icon = {
+  lock: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="1.5" />
+      <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </svg>
+  ),
+  scale: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 4v16M6 20h12M5 7h14M5 7l-2.5 6a3 3 0 0 0 5 0L5 7ZM19 7l-2.5 6a3 3 0 0 0 5 0L19 7Z" />
+    </svg>
+  ),
+  upload: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4.5 15v3.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V15" />
+    </svg>
+  ),
+  copy: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="8.5" y="8.5" width="11" height="11" rx="1.5" />
+      <path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </svg>
+  ),
+  arrow: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  ),
+};
+
+/* ---------- small shared pieces ---------- */
+
+function CopyButton({ text, label = "Copy" }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className={`copy${copied ? " done" : ""}`}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        } catch {
+          // Clipboard blocked by the browser; nothing useful to do.
+        }
+      }}
+    >
+      {copied ? Icon.check : Icon.copy}
+      <span>{copied ? "Copied" : label}</span>
+    </button>
+  );
+}
+
+function ErrorBox({ message }) {
+  return (
+    <div className="alert" role="alert">
+      <strong>That didn&apos;t work.</strong> {message}
+    </div>
+  );
+}
+
+// LLM calls take a few seconds, so show the stages of the work rather than a bare spinner.
+// Stages advance on a timer (the API doesn't stream progress); the last one stays active until done.
+function Progress({ title, steps }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const id = setInterval(() => setElapsed((Date.now() - started) / 1000), 200);
+    return () => clearInterval(id);
+  }, []);
+  const active = Math.min(Math.floor(elapsed / 1.6), steps.length - 1);
+
+  return (
+    <div className="progress" role="status" aria-live="polite">
+      <div className="progress-head">
+        <span className="eyebrow">Working</span>
+        <span className="mono muted">{elapsed.toFixed(0)}s · usually 3–20s</span>
+      </div>
+      <p className="progress-title">{title}</p>
+      <ol className="steps">
+        {steps.map((s, i) => (
+          <li key={s} className={i < active ? "done" : i === active ? "active" : ""}>
+            <span className="dot" aria-hidden="true">
+              {i < active ? Icon.check : null}
+            </span>
+            {s}
+          </li>
+        ))}
+      </ol>
+      <div className="bar" aria-hidden="true">
+        <span style={{ width: `${Math.min(92, (elapsed / 12) * 100)}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function useScrollIntoView(dep) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (dep && ref.current) ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [dep]);
+  return ref;
+}
+
+/* ---------- upload ---------- */
 
 function UploadBox({ onText, disabled }) {
   const [status, setStatus] = useState({ kind: "idle" });
@@ -258,19 +253,26 @@ function UploadBox({ onText, disabled }) {
             e.target.value = ""; // allow re-selecting the same file
           }}
         />
+        <span className="dz-icon">{Icon.upload}</span>
         {busy ? (
-          <span>Reading {status.name}…</span>
+          <span className="dz-text">
+            <strong>Reading {status.name}…</strong>
+          </span>
         ) : (
-          <span>
-            <strong>Upload your CV</strong> (PDF or Word .docx, up to 4 MB), or drop it here
+          <span className="dz-text">
+            <strong>Upload your CV</strong>
+            <span className="muted">PDF or Word .docx · up to 4 MB · or drag it here</span>
           </span>
         )}
       </label>
       {status.kind === "ok" ? (
         <p className="upload-msg ok" role="status">
-          ✓ Read {status.words} words from <strong>{status.name}</strong>
-          {status.truncated ? " (trimmed to fit)" : ""}. Check the text below and fix anything that looks wrong
-          before you submit. The file itself wasn&apos;t saved.
+          {Icon.check}
+          <span>
+            Read {status.words} words from <strong>{status.name}</strong>
+            {status.truncated ? " (trimmed to fit)" : ""}. Check the text below and fix anything that looks wrong.
+            The file itself wasn&apos;t saved.
+          </span>
         </p>
       ) : null}
       {status.kind === "error" ? (
@@ -282,11 +284,194 @@ function UploadBox({ onText, disabled }) {
   );
 }
 
+/* ---------- feature 1: tailoring ---------- */
+
+const TAILOR_STEPS = [
+  "Reading your CV",
+  "Matching it against the job's requirements",
+  "Rewriting your summary and bullets",
+  "Finding skills gaps",
+  "Drafting your cover letter and interview prep",
+];
+
+const TAILOR_PREVIEW = [
+  ["A", "Tailored CV", "Your summary and bullets rewritten for this job, using only what's really in your CV."],
+  ["B", "Skills gap", "What the job asks for that your CV doesn't show yet, with one honest next step each."],
+  ["C", "Cover letter", "A 200-word first draft you can edit and send."],
+  ["D", "Interview prep", "Five questions you're likely to get, with a tip for each."],
+];
+
+function EmptyPreview({ items, note }) {
+  return (
+    <div className="empty">
+      <p className="eyebrow">What you&apos;ll get</p>
+      <div className="empty-grid">
+        {items.map(([k, t, d]) => (
+          <div className="empty-tile" key={t}>
+            <span className="tile-key">{k}</span>
+            <strong>{t}</strong>
+            <span className="muted">{d}</span>
+          </div>
+        ))}
+      </div>
+      {note ? <p className="muted small">{note}</p> : null}
+    </div>
+  );
+}
+
+function ResultSection({ id, letter, title, meta, copyText, children }) {
+  return (
+    <section className="rsec" id={id} aria-labelledby={`${id}-h`}>
+      <header className="rsec-head">
+        <div>
+          <span className="eyebrow">
+            {letter} <span aria-hidden="true">/</span> {meta}
+          </span>
+          <h2 id={`${id}-h`}>{title}</h2>
+        </div>
+        {copyText ? <CopyButton text={copyText} /> : null}
+      </header>
+      <div className="rsec-body">{children}</div>
+    </section>
+  );
+}
+
+function TailorResults({ r }) {
+  const cvText = [
+    r.tailoredSummary,
+    ...r.tailoredExperience.map((e) => `${e.role}\n${e.bullets.map((b) => `- ${b}`).join("\n")}`),
+  ].join("\n\n");
+  const gapText = r.skillsGap
+    .map((g) => `${g.skill}${g.why ? ` - ${g.why}` : ""}${g.howToAddress ? `\n  Next step: ${g.howToAddress}` : ""}`)
+    .join("\n");
+  const qText = r.interviewQuestions
+    .map((q, i) => `${i + 1}. ${q.question}${q.tip ? `\n   Tip: ${q.tip}` : ""}`)
+    .join("\n");
+  const all = [
+    `TAILORED CV\n\n${cvText}`,
+    `SKILLS GAP\n\n${gapText || "None found"}`,
+    `COVER LETTER\n\n${r.coverLetter}`,
+    `INTERVIEW QUESTIONS\n\n${qText}`,
+  ].join("\n\n---\n\n");
+
+  const jump = [
+    ["r-cv", "A", "CV"],
+    ["r-gap", "B", "Gaps"],
+    ["r-letter", "C", "Letter"],
+    ["r-qs", "D", "Interview"],
+  ];
+
+  return (
+    <div className="results">
+      <nav className="jumpbar" aria-label="Result sections">
+        <div className="jump-links">
+          {jump.map(([id, k, label]) => (
+            <a key={id} href={`#${id}`}>
+              <span className="tile-key">{k}</span>
+              {label}
+            </a>
+          ))}
+        </div>
+        <CopyButton text={all} label="Copy all" />
+      </nav>
+
+      <div className="review">
+        <span className="review-icon">{Icon.scale}</span>
+        <p>
+          <strong>Review before you send.</strong> Check every claim is true, and fill in any{" "}
+          <code>[placeholders]</code> with real numbers. AI can make mistakes or reflect bias.
+        </p>
+      </div>
+
+      <ResultSection id="r-cv" letter="A" meta="Tailored CV" title="Your CV, pointed at this job" copyText={cvText}>
+        <p className="lede">{r.tailoredSummary}</p>
+        {r.tailoredExperience.map((e, i) => (
+          <div className="role" key={i}>
+            <h3>{e.role}</h3>
+            <ul className="bullets">
+              {e.bullets.map((b, j) => (
+                <li key={j}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </ResultSection>
+
+      <ResultSection
+        id="r-gap"
+        letter="B"
+        meta="Skills gap"
+        title={r.skillsGap.length ? `${r.skillsGap.length} thing${r.skillsGap.length > 1 ? "s" : ""} to work on` : "No major gaps"}
+        copyText={gapText || null}
+      >
+        {r.skillsGap.length === 0 ? (
+          <p>Your CV covers the main requirements of this job.</p>
+        ) : (
+          <ol className="gaps">
+            {r.skillsGap.map((g, i) => (
+              <li key={i}>
+                <div className="gap-top">
+                  <span className="gap-n mono">{String(i + 1).padStart(2, "0")}</span>
+                  <div>
+                    <strong>{g.skill}</strong>
+                    {g.why ? <p className="muted">{g.why}</p> : null}
+                  </div>
+                </div>
+                {g.howToAddress ? (
+                  <p className="next-step">
+                    {Icon.arrow}
+                    <span>{g.howToAddress}</span>
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        )}
+      </ResultSection>
+
+      <ResultSection
+        id="r-letter"
+        letter="C"
+        meta="Cover letter"
+        title="A first draft"
+        copyText={r.coverLetter}
+      >
+        <div className="letter">
+          {r.coverLetter.split(/\n{2,}/).map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      </ResultSection>
+
+      <ResultSection id="r-qs" letter="D" meta="Interview prep" title="Questions to expect" copyText={qText}>
+        <ol className="questions">
+          {r.interviewQuestions.map((q, i) => (
+            <li key={i}>
+              <span className="q-n" aria-hidden="true">
+                {i + 1}
+              </span>
+              <div>
+                <p className="q">{q.question}</p>
+                {q.tip ? (
+                  <p className="muted">
+                    <span className="mono tip-label">Tip</span> {q.tip}
+                  </p>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </ResultSection>
+    </div>
+  );
+}
+
 function TailorTool({ cv, setCv }) {
   const [job, setJob] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const outRef = useScrollIntoView(loading || result);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -304,11 +489,11 @@ function TailorTool({ cv, setCv }) {
 
   return (
     <>
-      <form onSubmit={onSubmit} className="card">
+      <form onSubmit={onSubmit} className="panel">
         <div className="grid2">
           <div className="field">
-            <label htmlFor="cv-text">
-              <span>Your CV</span>
+            <label htmlFor="cv-text" className="field-label">
+              <span className="mono step-n">01</span> Your CV
             </label>
             <UploadBox onText={setCv} disabled={loading} />
             <textarea
@@ -316,47 +501,64 @@ function TailorTool({ cv, setCv }) {
               value={cv}
               onChange={(e) => setCv(e.target.value)}
               placeholder="…or paste your CV text here"
-              rows={14}
+              rows={13}
               maxLength={20000}
               required
             />
           </div>
-          <label>
-            <span>Job description</span>
+          <div className="field">
+            <label htmlFor="job-text" className="field-label">
+              <span className="mono step-n">02</span> The job
+            </label>
             <textarea
+              id="job-text"
+              className="tall"
               value={job}
               onChange={(e) => setJob(e.target.value)}
-              placeholder="Paste the job advert here…"
-              rows={14}
+              placeholder="Paste the full job advert: title, responsibilities and requirements"
+              rows={18}
               maxLength={20000}
               required
             />
-          </label>
+          </div>
         </div>
         <div className="actions">
           <button type="submit" className="primary" disabled={loading}>
             {loading ? "Tailoring…" : "Tailor my application"}
+            {loading ? null : Icon.arrow}
           </button>
           <button
             type="button"
-            className="link"
+            className="ghost"
             disabled={loading}
             onClick={() => {
               setCv(EXAMPLE_CV);
               setJob(EXAMPLE_JOB);
             }}
           >
-            Fill with example
+            Try an example
           </button>
         </div>
       </form>
 
-      {loading ? <Loading message="Reading your CV and the job…" /> : null}
-      {error ? <ErrorBox message={error} /> : null}
-      {result ? <TailorResults r={result} /> : null}
+      <div ref={outRef} className="output">
+        {loading ? <Progress title="Tailoring your application" steps={TAILOR_STEPS} /> : null}
+        {error ? <ErrorBox message={error} /> : null}
+        {result ? <TailorResults r={result} /> : null}
+        {!loading && !error && !result ? <EmptyPreview items={TAILOR_PREVIEW} /> : null}
+      </div>
     </>
   );
 }
+
+/* ---------- feature 2: bridge income ---------- */
+
+const BRIDGE_STEPS = [
+  "Reading your skills and situation",
+  "Thinking about work that exists in your area",
+  "Checking it fits your hours and transport",
+  "Writing a first step for each option",
+];
 
 function BridgeTool({ cv }) {
   const [skills, setSkills] = useState("");
@@ -367,6 +569,7 @@ function BridgeTool({ cv }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const outRef = useScrollIntoView(loading || result);
   const hasCv = cv.trim().length > 0;
 
   async function onSubmit(e) {
@@ -391,16 +594,27 @@ function BridgeTool({ cv }) {
     }
   }
 
+  const allText = result
+    ? result.options
+        .map(
+          (o, i) =>
+            `${i + 1}. ${o.title}\n${o.whyItFits}\nPay: ${o.estimatedEarnings}\nHow to start: ${o.howToStart}${o.watchOut ? `\nWatch out: ${o.watchOut}` : ""}`
+        )
+        .join("\n\n")
+    : "";
+
   return (
     <>
-      <form onSubmit={onSubmit} className="card">
-        <p className="muted" style={{ marginTop: 0 }}>
-          Need money coming in while you job-hunt? Get 3-5 realistic short-term income ideas you could start
-          this week.
+      <form onSubmit={onSubmit} className="panel">
+        <p className="panel-intro">
+          Need money coming in while you job-hunt? Get 3–5 realistic short-term options you could start this week.
         </p>
-        <label>
-          <span>Your skills</span>
+        <div className="field">
+          <label htmlFor="skills" className="field-label">
+            <span className="mono step-n">01</span> Your skills
+          </label>
           <textarea
+            id="skills"
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
             placeholder="e.g. customer service, Excel, speak Spanish, good with kids, basic DIY"
@@ -408,50 +622,73 @@ function BridgeTool({ cv }) {
             maxLength={2000}
             required={!(hasCv && useCv)}
           />
-        </label>
-        {hasCv ? (
-          <label className="check">
-            <input type="checkbox" checked={useCv} onChange={(e) => setUseCv(e.target.checked)} />
-            Also use the CV I pasted in the &quot;Tailor my CV&quot; tab
-          </label>
-        ) : null}
+          {hasCv ? (
+            <label className="check">
+              <input type="checkbox" checked={useCv} onChange={(e) => setUseCv(e.target.checked)} />
+              <span>Also use the CV from the &quot;Tailor my CV&quot; tab</span>
+            </label>
+          ) : null}
+        </div>
         <div className="grid3">
-          <label>
-            <span>City or town</span>
+          <div className="field">
+            <label htmlFor="city" className="field-label">
+              <span className="mono step-n">02</span> City or town
+            </label>
             <input
+              id="city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="e.g. Manchester"
               maxLength={100}
               required
             />
-          </label>
-          <label>
-            <span>Hours free per week</span>
+          </div>
+          <div className="field">
+            <label htmlFor="hours" className="field-label">
+              <span className="mono step-n">03</span> Hours free / week
+            </label>
             <input
+              id="hours"
               type="number"
+              inputMode="numeric"
               min={1}
               max={80}
               value={hours}
               onChange={(e) => setHours(e.target.value)}
               required
             />
-          </label>
-          <label>
-            <span>Do you have a vehicle?</span>
-            <select value={hasVehicle ? "yes" : "no"} onChange={(e) => setHasVehicle(e.target.value === "yes")}>
-              <option value="no">No</option>
-              <option value="yes">Yes (car, van or motorbike)</option>
-            </select>
-          </label>
+          </div>
+          <div className="field">
+            <span className="field-label" id="vehicle-label">
+              <span className="mono step-n">04</span> Vehicle?
+            </span>
+            <div className="seg" role="radiogroup" aria-labelledby="vehicle-label">
+              {[
+                [false, "No"],
+                [true, "Yes"],
+              ].map(([v, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={hasVehicle === v}
+                  className={hasVehicle === v ? "on" : ""}
+                  onClick={() => setHasVehicle(v)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="actions">
           <button type="submit" className="primary" disabled={loading}>
             {loading ? "Finding options…" : "Find bridge income"}
+            {loading ? null : Icon.arrow}
           </button>
           <button
             type="button"
-            className="link"
+            className="ghost"
             disabled={loading}
             onClick={() => {
               setSkills("Customer service, Zendesk, Excel, training new staff, cash handling, stock counts");
@@ -460,91 +697,143 @@ function BridgeTool({ cv }) {
               setHasVehicle(false);
             }}
           >
-            Fill with example
+            Try an example
           </button>
         </div>
       </form>
 
-      {loading ? <Loading message="Looking for options near you…" /> : null}
-      {error ? <ErrorBox message={error} /> : null}
-      {result ? (
-        <div className="results" aria-live="polite">
-          <p className="review-note">
-            ⚠️ These are AI suggestions, not live job listings. Earnings are rough estimates. Check each option
-            yourself, and never pay upfront fees to start work.
-          </p>
-          {result.options.map((o, i) => (
-            <section className="card" key={i}>
-              <h2>
-                <span className="badge">{i + 1}</span> {o.title}
-              </h2>
-              {o.whyItFits ? <p>{o.whyItFits}</p> : null}
-              {o.estimatedEarnings ? (
-                <p className="muted">
-                  <strong>Pay:</strong> {o.estimatedEarnings}
-                </p>
-              ) : null}
-              <p className="start">
-                <strong>How to start:</strong> {o.howToStart}
+      <div ref={outRef} className="output">
+        {loading ? <Progress title="Finding options near you" steps={BRIDGE_STEPS} /> : null}
+        {error ? <ErrorBox message={error} /> : null}
+        {result ? (
+          <div className="results">
+            <nav className="jumpbar" aria-label="Bridge income results">
+              <span className="eyebrow">{result.options.length} options</span>
+              <CopyButton text={allText} label="Copy all" />
+            </nav>
+            <div className="review">
+              <span className="review-icon">{Icon.scale}</span>
+              <p>
+                <strong>Ideas, not job listings.</strong> Check each one yourself. Pay figures are rough estimates, and
+                you should never pay an upfront fee to start work.
               </p>
-              {o.watchOut ? <p className="muted">Watch out: {o.watchOut}</p> : null}
-            </section>
-          ))}
-        </div>
-      ) : null}
+            </div>
+            <div className="options">
+              {result.options.map((o, i) => (
+                <article className="option" key={i}>
+                  <span className="opt-n mono">{String(i + 1).padStart(2, "0")}</span>
+                  <h3>{o.title}</h3>
+                  {o.whyItFits ? <p>{o.whyItFits}</p> : null}
+                  {o.estimatedEarnings ? (
+                    <p className="pay">
+                      <span className="mono">Pay</span> {o.estimatedEarnings}
+                    </p>
+                  ) : null}
+                  <p className="next-step">
+                    {Icon.arrow}
+                    <span>
+                      <strong>Start:</strong> {o.howToStart}
+                    </span>
+                  </p>
+                  {o.watchOut ? <p className="muted small">Watch out: {o.watchOut}</p> : null}
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {!loading && !error && !result ? (
+          <EmptyPreview
+            items={[
+              ["→", "3–5 options", "Matched to your skills, city, hours and whether you have a vehicle."],
+              ["→", "A first step for each", "One concrete thing to do today or tomorrow."],
+              ["→", "Honest caveats", "Fees, checks or permits to know about before you start."],
+            ]}
+          />
+        ) : null}
+      </div>
     </>
   );
 }
 
+/* ---------- page ---------- */
+
 const TABS = [
-  { id: "tailor", label: "1. Tailor my CV" },
-  { id: "bridge", label: "2. Bridge income" },
+  { id: "tailor", n: "01", label: "Tailor my CV" },
+  { id: "bridge", n: "02", label: "Bridge income" },
 ];
 
 export default function Home() {
   const [tab, setTab] = useState("tailor");
-  // The CV is the shared profile: pasted once, used by both tools.
+  // The CV is the shared profile: pasted or uploaded once, used by both tools.
   const [cv, setCv] = useState("");
 
   return (
     <main>
-      <header>
-        <h1>RampWay</h1>
-        <p className="tagline">
-          Tailor your CV to any job in seconds, and find short-term income to bridge the gap while you search.
+      <header className="masthead">
+        <div className="brand">
+          <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M3 27h26M3 27 22 8h7" />
+          </svg>
+          <span>RampWay</span>
+        </div>
+        <h1>
+          Get the job.
+          <br />
+          <em>Cover the gap.</em>
+        </h1>
+        <p className="standfirst">
+          Upload your CV and a job advert to get a tailored CV, an honest skills gap, a cover letter and interview
+          prep. Need income while you search? We&apos;ll suggest work you could start this week.
         </p>
       </header>
 
-      <aside className="notice">
-        <strong>Privacy &amp; AI notice.</strong> The text you enter is sent to our AI provider (Groq) to
-        generate results. We don&apos;t store it, and there are no accounts. AI-generated hiring advice can be
-        biased or wrong: always review and edit the output yourself before sending anything to an employer.
-      </aside>
+      <div className="notices">
+        <div className="notice">
+          <span className="notice-icon">{Icon.lock}</span>
+          <p>
+            <strong>Not stored.</strong> What you type or upload is sent to our AI provider (Groq) to generate
+            results, then discarded. No accounts, no database.
+          </p>
+        </div>
+        <div className="notice">
+          <span className="notice-icon">{Icon.scale}</span>
+          <p>
+            <strong>AI can be wrong or biased.</strong> Treat everything as a draft, and check it before you send
+            anything to an employer.
+          </p>
+        </div>
+      </div>
 
-      <nav className="tabs" role="tablist">
+      <nav className="tabs" role="tablist" aria-label="Tools">
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             role="tab"
+            id={`tab-${t.id}`}
             aria-selected={tab === t.id}
+            aria-controls={`panel-${t.id}`}
             className={tab === t.id ? "tab active" : "tab"}
             onClick={() => setTab(t.id)}
           >
-            {t.label}
+            <span className="mono">{t.n}</span> {t.label}
           </button>
         ))}
       </nav>
 
       {/* Both tools stay mounted so switching tabs keeps what you typed. */}
-      <div hidden={tab !== "tailor"}>
+      <div id="panel-tailor" role="tabpanel" aria-labelledby="tab-tailor" hidden={tab !== "tailor"}>
         <TailorTool cv={cv} setCv={setCv} />
       </div>
-      <div hidden={tab !== "bridge"}>
+      <div id="panel-bridge" role="tabpanel" aria-labelledby="tab-bridge" hidden={tab !== "bridge"}>
         <BridgeTool cv={cv} />
       </div>
 
-      <footer>Built for a hackathon · AI model: gpt-oss-120b via Groq · Nothing you type is saved.</footer>
+      <footer className="colophon">
+        <span>RampWay · hackathon build</span>
+        <span>Model: gpt-oss-120b via Groq</span>
+        <span>Nothing you enter is saved</span>
+      </footer>
     </main>
   );
 }

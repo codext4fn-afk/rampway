@@ -4,9 +4,9 @@
 export default function Error({ reset }) {
   return (
     <main>
-      <div className="card error" role="alert">
+      <div className="alert" role="alert" style={{ marginTop: 40 }}>
         <strong>Something went wrong displaying this page.</strong> Your text wasn&apos;t saved anywhere.{" "}
-        <button type="button" className="link" onClick={() => reset()}>
+        <button type="button" className="ghost" onClick={() => reset()}>
           Try again
         </button>
       </div>
