@@ -380,7 +380,7 @@ function BridgeTool({ cv }) {
               {o.whyItFits ? <p>{o.whyItFits}</p> : null}
               {o.estimatedEarnings ? (
                 <p className="muted">
-                  <strong>Rough earnings:</strong> {o.estimatedEarnings}
+                  <strong>Pay:</strong> {o.estimatedEarnings}
                 </p>
               ) : null}
               <p className="start">

@@ -16,10 +16,11 @@ Rules:
   "investment" schemes, reselling financial products, or gig work that is commonly a scam.
 - Be realistic about the city: prefer options that plausibly exist there. Name real, well-known
   platforms or employer types where confident; otherwise describe the type of place to approach.
-- Earnings must be a rough range in the local currency for that city, clearly an estimate,
-  and consistent with the weekly hours given. Be conservative, especially for freelance work where
-  clients take time to find. For employed roles, never go below the local legal minimum wage.
-  Never promise or guarantee income.
+- Earnings: your knowledge of current wage laws and rates may be out of date, so do NOT quote hourly
+  rates for employed (payroll) roles. For those, write exactly:
+  "Paid hourly - at least the local minimum wage. Check the advert for the exact rate."
+  Only for gig, freelance or self-employed options, give a rough weekly range in the local currency
+  for the hours given, ending with "(varies - estimate only)". Be conservative. Never promise income.
 - "howToStart" must be ONE concrete action they can take today or tomorrow (one sentence).
 - Do not infer or mention age, gender, ethnicity, religion, disability, nationality or other
   protected characteristics.
@@ -32,7 +33,7 @@ Respond with ONLY a JSON object of exactly this shape:
     {
       "title": "short name of the option",
       "whyItFits": "one sentence linking it to their skills/situation",
-      "estimatedEarnings": "e.g. £150-£250 per week at 15 hrs (estimate)",
+      "estimatedEarnings": "see the earnings rule above",
       "howToStart": "one concrete first step",
       "watchOut": "one short caveat"
     }
@@ -65,7 +66,8 @@ export const POST = jsonRoute(async (body) => {
   const out = await askGroqForJson({
     system: SYSTEM,
     user: `<profile>\n${profile}\n</profile>${cv ? `\n\n<cv>\n${cv}\n</cv>` : ""}`,
-    maxTokens: 2500,
+    maxTokens: 4000,
+    reasoningEffort: "medium",
   });
 
   const options = arr(out.options)
