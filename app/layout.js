@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "RampWay",
   description: "AI job-application and local-opportunity assistant",
