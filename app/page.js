@@ -266,6 +266,12 @@ function Progress({ title, steps }) {
       <div className="bar" aria-hidden="true">
         <span style={{ width: `${Math.min(92, (elapsed / 12) * 100)}%` }} />
       </div>
+      <div className="skeleton" aria-hidden="true">
+        <span style={{ width: "92%" }} />
+        <span style={{ width: "78%" }} />
+        <span style={{ width: "85%" }} />
+        <span style={{ width: "54%" }} />
+      </div>
     </div>
   );
 }
@@ -276,6 +282,62 @@ function useScrollIntoView(dep) {
     if (dep && ref.current) ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [dep]);
   return ref;
+}
+
+// Fades/slides its content in the first time it scrolls into view. `delay` staggers siblings.
+function Reveal({ as: Tag = "div", className = "", delay = 0, style, children, ...rest }) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setShown(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <Tag ref={ref} className={`reveal${shown ? " in" : ""} ${className}`} style={{ "--d": `${delay}ms`, ...style }} {...rest}>
+      {children}
+    </Tag>
+  );
+}
+
+// Teaser shown after CV results: most people need income while they wait for replies.
+function BridgeTeaser({ onBridge }) {
+  return (
+    <Reveal className="bridge-teaser">
+      <div className="bt-copy">
+        <span className="eyebrow bt-eyebrow">
+          <span className="live-dot" aria-hidden="true" /> While you wait for replies
+        </span>
+        <h3>Need income this week?</h3>
+        <p>
+          Job hunts can take months. RampWay can suggest 3–5 short-term options near you, using the CV you just
+          added. It takes about 3 seconds.
+        </p>
+      </div>
+      <button type="button" className="primary bt-btn" onClick={onBridge}>
+        Show me options {Icon.arrow}
+      </button>
+      <svg className="bt-art" viewBox="0 0 120 60" aria-hidden="true">
+        <path d="M4 52 H40 L70 22 H116" />
+        <circle r="4">
+          <animateMotion dur="2.4s" repeatCount="indefinite" path="M4 52 H40 L70 22 H116" />
+        </circle>
+      </svg>
+    </Reveal>
+  );
 }
 
 /* ---------- upload ---------- */
@@ -374,12 +436,12 @@ function EmptyPreview({ items, note }) {
     <div className="empty">
       <p className="eyebrow">What you&apos;ll get</p>
       <div className="empty-grid">
-        {items.map(([k, t, d]) => (
-          <div className="empty-tile" key={t}>
+        {items.map(([k, t, d], i) => (
+          <Reveal className="empty-tile" key={t} delay={i * 90}>
             <span className="tile-key">{k}</span>
             <strong>{t}</strong>
             <span className="muted">{d}</span>
-          </div>
+          </Reveal>
         ))}
       </div>
       {note ? <p className="muted small">{note}</p> : null}
@@ -389,7 +451,7 @@ function EmptyPreview({ items, note }) {
 
 function ResultSection({ id, letter, title, meta, copyText, children }) {
   return (
-    <section className="rsec" id={id} aria-labelledby={`${id}-h`}>
+    <Reveal as="section" className="rsec" id={id} aria-labelledby={`${id}-h`}>
       <header className="rsec-head">
         <div>
           <span className="eyebrow">
@@ -400,11 +462,11 @@ function ResultSection({ id, letter, title, meta, copyText, children }) {
         {copyText ? <CopyButton text={copyText} /> : null}
       </header>
       <div className="rsec-body">{children}</div>
-    </section>
+    </Reveal>
   );
 }
 
-function TailorResults({ r }) {
+function TailorResults({ r, onBridge }) {
   const cvText = [
     r.tailoredSummary,
     ...r.tailoredExperience.map((e) => `${e.role}\n${e.bullets.map((b) => `- ${b.text}`).join("\n")}`),
@@ -562,11 +624,13 @@ function TailorResults({ r }) {
           ))}
         </ol>
       </ResultSection>
+
+      <BridgeTeaser onBridge={onBridge} />
     </div>
   );
 }
 
-function TailorTool({ cv, setCv }) {
+function TailorTool({ cv, setCv, onBridge }) {
   const [job, setJob] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -656,7 +720,7 @@ function TailorTool({ cv, setCv }) {
       <div ref={outRef} className="output">
         {loading ? <Progress title="Tailoring your application" steps={TAILOR_STEPS} /> : null}
         {error ? <ErrorBox message={error} /> : null}
-        {result ? <TailorResults r={result} /> : null}
+        {result ? <TailorResults r={result} onBridge={onBridge} /> : null}
         {!loading && !error && !result ? <EmptyPreview items={TAILOR_PREVIEW} /> : null}
       </div>
     </>
@@ -750,7 +814,7 @@ function BridgeTool({ cv }) {
               id="city"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. Manchester"
+              placeholder="e.g. Casablanca"
               maxLength={100}
               required
             />
@@ -834,7 +898,7 @@ function BridgeTool({ cv }) {
             </div>
             <div className="options">
               {result.options.map((o, i) => (
-                <article className="option" key={i}>
+                <Reveal as="article" className="option" key={i} delay={i * 110}>
                   <span className="opt-n mono">{String(i + 1).padStart(2, "0")}</span>
                   <h3>{o.title}</h3>
                   {o.whyItFits ? <p>{o.whyItFits}</p> : null}
@@ -850,7 +914,7 @@ function BridgeTool({ cv }) {
                     </span>
                   </p>
                   {o.watchOut ? <p className="muted small">Watch out: {o.watchOut}</p> : null}
-                </article>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -900,6 +964,7 @@ function HeroArt() {
           </text>
         </g>
       ))}
+      <circle className="goal-ring" cx="432" cy="58" r="17" />
       <g className="goal" style={{ animationDelay: "1.9s" }}>
         <circle cx="432" cy="58" r="17" />
         <path d="m424 58 6 6 11-12" />
@@ -929,16 +994,36 @@ function PrivacyLine() {
 
 const TABS = [
   { id: "tailor", n: "01", label: "Tailor my CV" },
-  { id: "bridge", n: "02", label: "Bridge income" },
+  { id: "bridge", n: "02", label: "Bridge income", badge: "Need money now?" },
+];
+
+const TICKER = [
+  "Tailored CV",
+  "Honest skills gap",
+  "Cover letter",
+  "Interview prep",
+  "French & English",
+  "Every bullet traced to your CV",
+  "Email & phone removed before AI",
+  "Bridge income near you",
+  "Nothing stored",
 ];
 
 export default function Home() {
   const [tab, setTab] = useState("tailor");
   // The CV is the shared profile: pasted or uploaded once, used by both tools.
   const [cv, setCv] = useState("");
+  const tabsRef = useRef(null);
+
+  // Switch tool and bring the tabs into view (used by the hero buttons and the post-results teaser).
+  function go(id) {
+    setTab(id);
+    requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   return (
     <main>
+      <div className="scroll-progress" aria-hidden="true" />
       <header className="masthead">
         <div className="brand">
           <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -950,18 +1035,48 @@ export default function Home() {
           <div className="hero-copy">
             <h1>
               <span className="line">Get the job.</span>
-              <em className="line">Cover the gap.</em>
+              <span className="line">
+                <em>
+                  Cover the gap.
+                  <svg className="swoosh" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M3 14 C 70 4, 170 3, 297 9" pathLength="1" />
+                  </svg>
+                </em>
+              </span>
             </h1>
             <p className="standfirst">
               Upload your CV and a job advert to get a tailored CV, an honest skills gap, a cover letter and
               interview prep. Need income while you search? We&apos;ll suggest work you could start this week.
             </p>
+            <div className="hero-ctas">
+              <button type="button" className="primary" onClick={() => go("tailor")}>
+                Tailor my CV {Icon.arrow}
+              </button>
+              <button type="button" className="teaser-pill" onClick={() => go("bridge")}>
+                <span className="live-dot" aria-hidden="true" />
+                <span>
+                  Need income this week? <strong>Try Bridge income</strong>
+                </span>
+                {Icon.arrow}
+              </button>
+            </div>
           </div>
           <HeroArt />
         </div>
       </header>
 
-      <nav className="tabs" role="tablist" aria-label="Tools">
+      <div className="ticker" aria-hidden="true">
+        <div className="ticker-track">
+          {[...TICKER, ...TICKER].map((t, i) => (
+            <span key={i}>
+              {t}
+              <i />
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <nav className="tabs" role="tablist" aria-label="Tools" ref={tabsRef}>
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -974,13 +1089,19 @@ export default function Home() {
             onClick={() => setTab(t.id)}
           >
             <span className="mono">{t.n}</span> {t.label}
+            {t.badge && tab !== t.id ? (
+              <span className="tab-badge">
+                <span className="live-dot" aria-hidden="true" />
+                {t.badge}
+              </span>
+            ) : null}
           </button>
         ))}
       </nav>
 
       {/* Both tools stay mounted so switching tabs keeps what you typed. */}
       <div id="panel-tailor" role="tabpanel" aria-labelledby="tab-tailor" hidden={tab !== "tailor"}>
-        <TailorTool cv={cv} setCv={setCv} />
+        <TailorTool cv={cv} setCv={setCv} onBridge={() => go("bridge")} />
       </div>
       <div id="panel-bridge" role="tabpanel" aria-labelledby="tab-bridge" hidden={tab !== "bridge"}>
         <BridgeTool cv={cv} />

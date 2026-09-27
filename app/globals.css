@@ -52,6 +52,7 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+html, body { overflow-x: clip; }
 body {
   margin: 0;
   background: var(--paper);
@@ -91,7 +92,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
   font-weight: 400;
   font-variation-settings: "opsz" 144;
 }
-.masthead h1 em { font-style: italic; color: var(--signal); }
+.masthead h1 em { font-style: italic; color: var(--signal); position: relative; display: inline-block; }
 .standfirst { max-width: 58ch; margin-top: 20px; font-size: 1.075rem; color: var(--ink-2); }
 
 /* ---------- tabs ---------- */
@@ -110,7 +111,7 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 }
 .tab .mono { font-size: 0.8rem; margin-right: 6px; }
 .tab:hover { color: var(--ink); }
-.tab.active { color: var(--ink); border-bottom-color: var(--signal); }
+.tab.active { color: var(--ink); }
 .tab.active .mono { color: var(--signal); }
 
 /* ---------- forms ---------- */
@@ -371,7 +372,7 @@ button:disabled { cursor: progress; }
 
 /* page load: masthead pieces arrive in sequence */
 .brand { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
-.masthead h1 .line { animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.masthead h1 .line { animation: unmask 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
 .masthead h1 .line:nth-child(1) { animation-delay: 0.1s; }
 .masthead h1 .line:nth-child(2) { animation-delay: 0.25s; }
 .standfirst { animation: rise 0.8s 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
@@ -379,7 +380,7 @@ button:disabled { cursor: progress; }
 [role="tabpanel"]:not([hidden]) .panel { animation-delay: 0s; }
 
 /* output: each block rises in, staggered */
-.empty-tile, .results > *, .rsec, .option, .progress, .alert { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.results > :not(.reveal), .progress, .alert { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
 .empty-tile:nth-child(2) { animation-delay: 0.07s; }
 .empty-tile:nth-child(3) { animation-delay: 0.14s; }
 .empty-tile:nth-child(4) { animation-delay: 0.21s; }
@@ -406,7 +407,7 @@ button:disabled { cursor: progress; }
 .empty-tile:hover .tile-key { background: var(--signal); color: var(--signal-ink); }
 .tile-key { transition: background 0.2s, color 0.2s; }
 .option { transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s; }
-.option:hover { transform: translateY(-4px); box-shadow: 6px 6px 0 var(--paper-2); }
+.option:hover { transform: translateY(-5px) rotate(-0.4deg); box-shadow: 6px 6px 0 var(--paper-2); }
 .option:hover .next-step svg { transform: translateX(3px); }
 .tab { transition: color 0.2s, border-color 0.3s; }
 .copy { transition: border-color 0.15s, color 0.15s, transform 0.1s; }
@@ -429,6 +430,162 @@ body::before {
 .privacy-line { display: flex; gap: 8px; align-items: flex-start; margin: 16px 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-2); max-width: 70ch; }
 .privacy-line svg { width: 15px; height: 15px; margin-top: 2px; color: var(--signal); }
 
+/* ---------- more life: v2 motion ---------- */
+
+@keyframes unmask {
+  from { opacity: 0; transform: translateY(45%) skewY(4deg); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes ping { 75%, 100% { transform: scale(2.6); opacity: 0; } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 var(--signal-soft); } 50% { box-shadow: 0 0 0 8px var(--signal-soft); } }
+@keyframes nudge {
+  0%, 72%, 100% { transform: none; }
+  76% { transform: translateY(-3px) rotate(-3deg); }
+  80% { transform: translateY(0) rotate(3deg); }
+  84% { transform: rotate(-1.5deg); }
+}
+@keyframes ticker { to { transform: translateX(-50%); } }
+@keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-90px, 70px) scale(1.2); } }
+@keyframes ring { 0% { opacity: 0.7; transform: scale(1); } 100% { opacity: 0; transform: scale(2.3); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes sheen { 0%, 65% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+@keyframes stamp { from { opacity: 0; transform: scale(1.18) rotate(-1.5deg); } to { opacity: 1; transform: none; } }
+@keyframes tick { to { stroke-dashoffset: 0; } }
+@keyframes panelIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+@keyframes progress { to { transform: scaleX(1); } }
+
+/* scroll-in reveal (see <Reveal>) */
+.reveal:not(.in) { opacity: 0; }
+.reveal.in { animation: rise 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms) backwards; }
+
+/* reading progress bar (browsers with scroll-driven animations) */
+.scroll-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--signal); transform: scaleX(0); transform-origin: left; z-index: 50; pointer-events: none; }
+@supports (animation-timeline: scroll()) {
+  .scroll-progress { animation: progress linear both; animation-timeline: scroll(root); }
+}
+
+/* hero: drifting warm glow, underline swoosh, CTAs */
+.masthead { position: relative; isolation: isolate; }
+.masthead::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -40px;
+  right: 0;
+  width: min(560px, 90%);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, var(--signal-soft) 0%, transparent 65%);
+  animation: drift 14s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.swoosh { position: absolute; left: 0; bottom: -0.2em; width: 100%; height: 0.22em; overflow: visible; }
+.swoosh path { fill: none; stroke: var(--signal); stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 0.9s 1.05s cubic-bezier(0.6, 0, 0.3, 1) forwards; }
+.hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 26px; animation: rise 0.8s 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.teaser-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 0.95rem var(--font-sans);
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1.5px solid var(--signal);
+  border-radius: 999px;
+  padding: 12px 18px;
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.2s;
+  animation: glow 2.8s ease-in-out 1.8s infinite;
+}
+.teaser-pill strong { color: var(--signal); }
+.teaser-pill svg { color: var(--signal); transition: transform 0.2s; }
+.teaser-pill:hover { transform: translateY(-2px); background: var(--signal-soft); }
+.teaser-pill:hover svg { transform: translateX(4px); }
+.teaser-pill .live-dot { color: var(--signal); }
+
+/* pulsing "live" dot used on teasers and the tab badge */
+.live-dot { position: relative; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.live-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: currentColor; animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* ticker strip */
+.ticker {
+  overflow: hidden;
+  border-bottom: 1px solid var(--rule);
+  padding: 13px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ticker-track { display: flex; width: max-content; animation: ticker 40s linear infinite; }
+.ticker:hover .ticker-track { animation-play-state: paused; }
+.ticker span { display: inline-flex; align-items: center; gap: 20px; padding-right: 20px; font: 500 0.78rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
+.ticker i { display: inline-block; width: 6px; height: 6px; background: var(--signal); transform: rotate(45deg); }
+
+/* tabs: growing underline + attention badge on Bridge income */
+.tab { position: relative; }
+.tab::after { content: ""; position: absolute; left: 0; right: 16px; bottom: -1px; height: 3px; background: var(--signal); transform: scaleX(0); transform-origin: left; transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.tab:hover::after { transform: scaleX(0.35); }
+.tab.active::after { transform: scaleX(1); }
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--signal);
+  color: var(--signal-ink);
+  font: 600 0.68rem var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+  animation: nudge 3s ease-in-out 2s infinite;
+}
+[role="tabpanel"]:not([hidden]) { animation: panelIn 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
+
+/* buttons: periodic light sweep */
+.primary { position: relative; overflow: hidden; }
+.primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.38) 50%, transparent 65%);
+  transform: translateX(-130%);
+  animation: sheen 4.2s ease-in-out 2.5s infinite;
+  pointer-events: none;
+}
+.primary:disabled::after { display: none; }
+
+/* loading: typing dots + shimmering skeleton */
+.progress-title::after { content: ""; animation: dots 1.2s steps(1) infinite; }
+.skeleton { display: grid; gap: 10px; margin-top: 22px; }
+.skeleton span { display: block; height: 11px; border-radius: 3px; background: linear-gradient(90deg, var(--paper-2) 0%, var(--sheet) 50%, var(--paper-2) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+
+/* results: evidence stamp and ticks draw in */
+.reveal.in .trace-summary { animation: stamp 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) 0.35s backwards; }
+.reveal.in .trace.ok svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: tick 0.45s ease-out 0.7s forwards; }
+
+/* hero art: ripple around "Hired" */
+.hero-art .goal-ring { fill: none; stroke: var(--signal); stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; animation: ring 2.4s ease-out 2.4s infinite; }
+
+/* bridge-income teaser after CV results */
+.bridge-teaser {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px 28px;
+  align-items: center;
+  margin-top: 40px;
+  padding: 28px 30px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bridge-teaser h3 { font-size: clamp(1.5rem, 3.5vw, 2rem); margin: 8px 0 6px; color: var(--paper); }
+.bridge-teaser p { opacity: 0.8; max-width: 52ch; font-size: 0.95rem; }
+.bt-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--signal); }
+.bt-btn { position: relative; z-index: 1; animation: glow 2.8s ease-in-out 1s infinite; }
+.bt-art { position: absolute; right: 18px; top: 12px; width: 120px; height: 60px; opacity: 0.45; stroke: var(--signal); stroke-width: 3; }
+.bt-art circle { fill: var(--signal); stroke: none; }
+
 /* ---------- small screens ---------- */
 
 @media (max-width: 760px) {
@@ -447,6 +604,17 @@ body::before {
 @media (max-width: 760px) {
   .hero { grid-template-columns: 1fr; gap: 8px; }
   .hero-art { max-width: 380px; margin: 8px 0 0; }
+  .hero-ctas { flex-direction: column; align-items: stretch; }
+  .hero-ctas .primary, .teaser-pill { justify-content: center; }
+  .bridge-teaser { grid-template-columns: 1fr; padding: 24px 20px; }
+  .bt-btn { justify-content: center; }
+  .bt-art { width: 90px; height: 45px; right: 12px; top: 10px; }
+}
+
+@media (max-width: 480px) {
+  /* keep both tabs on one line: the badge shrinks to a pulsing dot */
+  .tab-badge { position: absolute; top: 6px; right: -2px; margin: 0; padding: 0; width: 10px; height: 10px; font-size: 0; background: transparent; color: var(--signal); animation: none; }
+  .tab-badge .live-dot { width: 10px; height: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -454,4 +622,7 @@ body::before {
   .hero-art .ramp { stroke-dashoffset: 0; }
   .hero-art .ramp-shadow, .hero-art .stop, .hero-art .goal { opacity: 1; }
   .hero-art .runner { display: none; }
+  .swoosh path, .trace.ok svg path { stroke-dashoffset: 0 !important; }
+  .reveal:not(.in) { opacity: 1; }
+  .ticker-track { transform: none; }
 }
