@@ -26,11 +26,14 @@
 
   --radius: 4px;
   --gutter: clamp(16px, 4vw, 40px);
+  --grain: 0.05;
   color-scheme: light;
 }
 
+/* Dark palette: follows the system setting unless the visitor chose a theme with the toggle
+   (stored as data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #15130f;
     --paper-2: #1e1b16;
     --sheet: #1b1814;
@@ -47,8 +50,29 @@
     --bad: #ff8a7a;
     --bad-soft: #3d1a15;
     --focus: #ff6b35;
+    --grain: 0.07;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --paper: #15130f;
+  --paper-2: #1e1b16;
+  --sheet: #1b1814;
+  --ink: #efe9dd;
+  --ink-2: #aaa192;
+  --rule: #37322b;
+  --rule-strong: #efe9dd;
+  --signal: #ff6b35;
+  --signal-text: #ff8a5c;
+  --signal-ink: #140b05;
+  --signal-soft: #4a2012;
+  --ok: #3ddc97;
+  --ok-soft: #10331f;
+  --bad: #ff8a7a;
+  --bad-soft: #3d1a15;
+  --focus: #ff6b35;
+  --grain: 0.07;
+  color-scheme: dark;
 }
 
 /* ---------- base ---------- */
@@ -424,10 +448,9 @@ body::before {
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  opacity: 0.05;
+  opacity: var(--grain);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-@media (prefers-color-scheme: dark) { body::before { opacity: 0.07; } }
 
 /* short privacy / AI note under each submit button */
 .privacy-line { display: flex; gap: 8px; align-items: flex-start; margin: 16px 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-2); max-width: 70ch; }
@@ -507,6 +530,31 @@ body::before {
 /* pulsing "live" dot used on teasers and the tab badge */
 .live-dot { position: relative; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
 .live-dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: currentColor; animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* top bar + light/dark toggle */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 0.82rem var(--font-mono);
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 7px 14px 7px 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+  animation: rise 0.6s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.theme-toggle:hover { border-color: var(--signal); transform: translateY(-1px); }
+.tt-icon { position: relative; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--signal); color: var(--signal-ink); overflow: hidden; }
+.tt-icon svg { position: absolute; width: 16px; height: 16px; stroke-width: 2; transition: transform 0.5s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.3s; }
+.tt-icon .tt-moon { fill: currentColor; }
+.tt-icon .tt-sun { transform: translateY(26px) rotate(-90deg); opacity: 0; }
+.tt-icon.is-dark .tt-sun { transform: none; opacity: 1; }
+.tt-icon.is-dark .tt-moon { transform: translateY(-26px) rotate(90deg); opacity: 0; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 
 /* demo video band */
 .demo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 36px; align-items: center; padding: 40px 0 8px; }

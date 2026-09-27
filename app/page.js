@@ -979,6 +979,63 @@ function HeroArt() {
   );
 }
 
+// Light/dark switch. The choice is stored in this browser only (localStorage) and applied as
+// data-theme on <html>. Where supported, the new theme spreads in a circle from the button.
+function ThemeToggle() {
+  const [theme, setTheme] = useState(null);
+  useEffect(() => {
+    const saved = document.documentElement.dataset.theme;
+    setTheme(saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  }, []);
+
+  function toggle(e) {
+    const next = theme === "dark" ? "light" : "dark";
+    const apply = () => {
+      document.documentElement.dataset.theme = next;
+      setTheme(next);
+    };
+    try {
+      localStorage.setItem("rampway-theme", next);
+    } catch {
+      // Storage blocked (private mode): the switch still works for this visit.
+    }
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!document.startViewTransition || reduce) return apply();
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    document.startViewTransition(apply).ready.then(() => {
+      document.documentElement.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+        { duration: 600, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", pseudoElement: "::view-transition-new(root)" }
+      );
+    });
+  }
+
+  const dark = theme === "dark";
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={toggle}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      <span className={`tt-icon${dark ? " is-dark" : ""}`} aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="tt-sun">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" />
+        </svg>
+        <svg viewBox="0 0 24 24" className="tt-moon">
+          <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+        </svg>
+      </span>
+      <span className="tt-label">{theme ? (dark ? "Light mode" : "Dark mode") : "Theme"}</span>
+    </button>
+  );
+}
+
 function PrivacyLine() {
   return (
     <p className="privacy-line">
@@ -1014,11 +1071,14 @@ export default function Home() {
     <main>
       <div className="scroll-progress" aria-hidden="true" />
       <header className="masthead">
-        <div className="brand">
-          <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M3 27h26M3 27 22 8h7" />
-          </svg>
-          <span>RampWay</span>
+        <div className="topbar">
+          <div className="brand">
+            <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M3 27h26M3 27 22 8h7" />
+            </svg>
+            <span>RampWay</span>
+          </div>
+          <ThemeToggle />
         </div>
         <div className="hero">
           <div className="hero-copy">

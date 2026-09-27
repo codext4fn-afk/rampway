@@ -20,9 +20,16 @@ export const viewport = {
   ],
 };
 
+// Applies a saved light/dark choice before first paint, so there's no flash of the wrong theme.
+// Without a saved choice, the CSS follows the system setting.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("rampway-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );
