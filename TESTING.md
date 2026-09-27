@@ -99,5 +99,5 @@ At Groq's published on-demand price for `gpt-oss-120b` (**$0.15 per 1M input tok
 - **The summary and cover letter are not traced sentence by sentence.** Only experience bullets are checked against the CV. The backup model occasionally overstates in the summary.
 - No load test beyond small bursts. Under sustained jury-scale traffic, all three free-tier quotas can run out, and users then see the "wait a minute" message.
 - No OCR, so scanned CVs must be pasted.
-- Bridge Income can name platforms that have changed or left a market (e.g. it once suggested Jumia Food in Morocco). These are reasoned suggestions, not live data, and the UI says so.
+- Bridge Income can name platforms that have changed or left a market (e.g. it once suggested Jumia Food in Morocco). The suggestions are reasoned, not live data, and the UI says so. Each one links to live job-site searches (checked on 27 Sep: a Rekrute link for "agent centre d'appels" opened current postings), but Rekrute's search isn't city-filtered and the individual adverts aren't vetted.
 - Arabic-language job adverts were not tested.

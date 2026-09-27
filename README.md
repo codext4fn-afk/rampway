@@ -124,7 +124,7 @@ You need [Node.js](https://nodejs.org) 20.9 or newer and a free Groq API key.
 
 - **Models:** RampWay uses OpenAI's open-weight **gpt-oss-120b**, served by **Groq**. If that model is rate-limited, the request goes to **gpt-oss-20b**, then **qwen3.8-27b**. Answers from a backup model show a note asking you to check them extra carefully.
 - **Where your data goes:** email addresses and phone numbers are removed first. The rest of the CV text, the job advert and the bridge-income inputs you submit are then sent to Groq's API to generate the response. **RampWay stores nothing:** there is no database, no accounts and no logging of your content, and uploaded files are processed in memory and discarded. Groq's own data handling is covered by [Groq's privacy policy](https://groq.com/privacy-policy/). Don't submit anything you aren't comfortable sending to a third-party AI provider.
-- **All output is AI-generated.** Nothing is checked by a human. Bridge-income suggestions are reasoned ideas, **not live job listings**.
+- **All output is AI-generated.** Nothing is checked by a human. Bridge-income suggestions are reasoned ideas. Each one links to **live job searches** (Rekrute in Morocco, Indeed, LinkedIn, Google Jobs) for an AI-written search phrase. RampWay doesn't copy, store or check the postings themselves.
 - **Built with AI assistance:** this project was built during a hackathon with the help of an AI coding assistant (Claude).
 
 ## Responsible AI
@@ -153,7 +153,7 @@ What the app does about these risks:
 - **No OCR.** Scanned or photographed CVs can't be read. Users are asked to paste the text instead.
 - **4 MB upload limit**, because Vercel caps request bodies at 4.5 MB. Old `.doc` files aren't supported.
 - **Parsing is text-only.** Complex layouts (columns, tables, text boxes) can come out in a jumbled order, which is why the extracted text is always shown for editing.
-- **Bridge income is reasoning, not data.** The model may name companies or platforms that don't operate in your area or that have fees. Check each one yourself.
+- **Bridge income ideas are reasoning; the postings are on other sites.** The model may name companies or platforms that don't operate in your area or that have fees. The "Live postings" links open real, current search results, but Rekrute's search isn't filtered by city, and we don't vet individual adverts. Check each one yourself.
 - **The loading stages are illustrative.** The API returns the whole answer at once, so the progress steps advance on a timer rather than reporting real progress.
 - **Evidence tracing covers experience bullets only.** The summary and cover letter are not traced sentence by sentence.
 - **Tested in French and English.** Arabic job adverts have not been tested, and advice may lean towards UK, US and French-language hiring norms.
