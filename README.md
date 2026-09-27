@@ -50,6 +50,8 @@ It is built around honesty. It rephrases and emphasises what's really in your CV
 ### Experience
 - Editorial "paper & signal" design (Fraunces, IBM Plex Sans and IBM Plex Mono), with light and dark mode.
 - Animated hero illustration, staggered results, and a staged loading state that explains what's happening instead of a bare spinner.
+- A "See it in action" band with a real 44-second screen recording of the app (`public/demo.mp4`). It was produced by an automated Playwright script and shows a PDF upload, a French tailored application with traced bullets, and Bridge income for Casablanca.
+- Bridge income is signposted three ways: a header button, a pulsing "Need money now?" badge on its tab, and a "Need income this week?" card after the CV results.
 - Works on phones (tested at 390px wide). Respects the "reduce motion" accessibility setting.
 - Friendly error messages everywhere. There's never a blank screen or raw error; a crash screen catches anything unexpected.
 
