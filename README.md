@@ -165,7 +165,7 @@ What the app does about these risks:
 - **OCR** for scanned CVs (e.g. Tesseract), still processed in memory.
 - **Download as .docx/PDF** in a clean CV template.
 - **Live opportunities:** optionally connect bridge income to real job-board and gig APIs for the user's city.
-- **Arabic and Darija** support, and region-aware hiring advice for Moroccan employers.
+- **Mock interview mode:** RampWay asks you the five likely questions and gives feedback on your answers.
 - **Evaluation set:** a set of real, anonymised CV/job pairs, scored automatically for fabrication and bias on every change.
 - **Rate-limit resilience:** a paid tier or a queue, so busy periods never block users.
 
