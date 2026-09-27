@@ -997,17 +997,6 @@ const TABS = [
   { id: "bridge", n: "02", label: "Bridge income", badge: "Need money now?" },
 ];
 
-const TICKER = [
-  "Tailored CV",
-  "Honest skills gap",
-  "Cover letter",
-  "Interview prep",
-  "French & English",
-  "Every bullet traced to your CV",
-  "Email & phone removed before AI",
-  "Bridge income near you",
-  "Nothing stored",
-];
 
 export default function Home() {
   const [tab, setTab] = useState("tailor");
@@ -1065,16 +1054,39 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="ticker" aria-hidden="true">
-        <div className="ticker-track">
-          {[...TICKER, ...TICKER].map((t, i) => (
-            <span key={i}>
-              {t}
-              <i />
-            </span>
-          ))}
+      <Reveal as="section" className="demo" aria-labelledby="demo-h">
+        <div className="demo-head">
+          <span className="eyebrow demo-eyebrow">
+            <span className="live-dot" aria-hidden="true" /> See it in action
+          </span>
+          <h2 id="demo-h">From a PDF CV to a tailored French application, and income ideas, in under a minute.</h2>
+          <p className="muted small">
+            A real screen recording of this app, not a mock-up. The example CV is fictional, and its email and phone
+            number are removed before the AI sees it.
+          </p>
+          <button type="button" className="ghost" onClick={() => go("tailor")}>
+            Try it yourself ↓
+          </button>
         </div>
-      </div>
+        <div className="demo-frame">
+          <div className="demo-bar" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <span>rampway.vercel.app</span>
+          </div>
+          <video
+            src="/demo.mp4"
+            poster="/demo-poster.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label="Screen recording: uploading a French CV, getting a tailored application with each bullet traced to the CV, then Bridge income options in Casablanca"
+          />
+        </div>
+      </Reveal>
 
       <nav className="tabs" role="tablist" aria-label="Tools" ref={tabsRef}>
         {TABS.map((t) => (
