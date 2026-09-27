@@ -8,9 +8,10 @@ const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
   method: "POST",
   headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
   body: JSON.stringify({
-    model: "llama-3.3-70b-versatile",
+    model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+    reasoning_effort: "low",
     messages: [{ role: "user", content: "Reply with exactly: RampWay key works" }],
-    max_tokens: 20,
+    max_tokens: 300,
   }),
 });
 if (!res.ok) {
