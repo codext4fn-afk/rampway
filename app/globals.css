@@ -286,6 +286,15 @@ button:disabled { cursor: progress; }
 .review { display: flex; gap: 12px; margin: 20px 0 8px; padding: 14px 16px; background: var(--signal-soft); border-radius: var(--radius); font-size: 0.92rem; line-height: 1.5; }
 .review-icon { color: var(--signal); margin-top: 2px; }
 .backup-note { font-weight: 600; }
+.trace { display: flex; gap: 6px; align-items: flex-start; margin-top: 4px; font-size: 0.8rem; line-height: 1.45; color: var(--ink-2); }
+.trace svg { width: 13px; height: 13px; margin-top: 2px; color: var(--ok); stroke-width: 2.4; }
+.trace q { font-style: italic; }
+.trace.warn { color: var(--bad); font-weight: 500; }
+.trace.warn > span:first-child { display: inline-grid; place-items: center; width: 14px; height: 14px; margin-top: 1px; border-radius: 50%; background: var(--bad); color: var(--sheet); font-size: 0.7rem; font-weight: 700; flex: none; }
+.trace-summary { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; padding: 10px 12px; border-radius: var(--radius); background: var(--paper-2); margin: 0 0 8px; }
+.trace-summary svg { width: 15px; height: 15px; margin-top: 2px; color: var(--ink-2); }
+.trace-summary.all { background: var(--ok-soft); }
+.trace-summary.all svg { color: var(--ok); }
 .removed-note { display: block; margin-top: 6px; font-size: 0.85rem; color: var(--ink-2); }
 .removed-note svg { width: 13px; height: 13px; vertical-align: -2px; color: var(--ok); }
 

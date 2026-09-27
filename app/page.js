@@ -197,6 +197,25 @@ function CopyButton({ text, label = "Copy" }) {
   );
 }
 
+// "5 of 5 bullets traced to your CV": the server checked each bullet's cited source against the CV.
+function TraceSummary({ experience }) {
+  const all = experience.flatMap((e) => e.bullets);
+  if (!all.length) return null;
+  const ok = all.filter((b) => b.verified).length;
+  return (
+    <p className={`trace-summary${ok === all.length ? " all" : ""}`}>
+      {Icon.check}
+      <span>
+        <strong>
+          {ok} of {all.length} bullets traced to your CV.
+        </strong>{" "}
+        Each rewrite was checked against the original line it came from
+        {ok < all.length ? "; the ones we couldn't find are marked below." : "."}
+      </span>
+    </p>
+  );
+}
+
 // Shown when the main model was busy and the smaller backup model answered instead.
 function BackupNote() {
   return (
@@ -388,7 +407,7 @@ function ResultSection({ id, letter, title, meta, copyText, children }) {
 function TailorResults({ r }) {
   const cvText = [
     r.tailoredSummary,
-    ...r.tailoredExperience.map((e) => `${e.role}\n${e.bullets.map((b) => `- ${b}`).join("\n")}`),
+    ...r.tailoredExperience.map((e) => `${e.role}\n${e.bullets.map((b) => `- ${b.text}`).join("\n")}`),
   ].join("\n\n");
   const gapText = r.skillsGap
     .map((g) => `${g.skill}${g.why ? ` - ${g.why}` : ""}${g.howToAddress ? `\n  Next step: ${g.howToAddress}` : ""}`)
@@ -448,12 +467,30 @@ function TailorResults({ r }) {
 
       <ResultSection id="r-cv" letter="A" meta="Tailored CV" title="Your CV, pointed at this job" copyText={cvText}>
         <p className="lede">{r.tailoredSummary}</p>
+        <TraceSummary experience={r.tailoredExperience} />
         {r.tailoredExperience.map((e, i) => (
           <div className="role" key={i}>
             <h3>{e.role}</h3>
             <ul className="bullets">
               {e.bullets.map((b, j) => (
-                <li key={j}>{b}</li>
+                <li key={j}>
+                  {b.text}
+                  {b.verified ? (
+                    <span className="trace ok">
+                      {Icon.check}
+                      <span>
+                        From your CV: <q>{b.source}</q>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="trace warn">
+                      <span aria-hidden="true">!</span>
+                      <span>
+                        We couldn&apos;t find the source of this line in your CV. Check it before using it.
+                      </span>
+                    </span>
+                  )}
+                </li>
               ))}
             </ul>
           </div>
