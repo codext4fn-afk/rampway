@@ -1,5 +1,6 @@
 import { makeTracer } from "../../../lib/trace";
-import { askGroqForJson, jsonRoute, UserFacingError, str, arr, redactContact } from "../../../lib/groq";
+import { askGroqForJson, jsonRoute, UserFacingError, str, arr } from "../../../lib/groq";
+import { redactContact } from "../../../lib/privacy";
 
 export const maxDuration = 60;
 

@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test-key": "node --env-file=.env.local scripts/test-key.mjs"
+    "test-key": "node --env-file=.env.local scripts/test-key.mjs",
+    "test:unit": "node tests/unit.mjs",
+    "test:upload": "node tests/upload.mjs",
+    "test:ai": "node --env-file-if-exists=.env.local tests/ai-eval.mjs",
+    "test": "node tests/unit.mjs"
   },
   "dependencies": {
     "mammoth": "^1.13.0",
@@ -15,5 +19,6 @@
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",
     "unpdf": "^1.8.1"
-  }
+  },
+  "type": "module"
 }
