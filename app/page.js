@@ -41,6 +41,44 @@ You have:
 - Clear written and verbal communication
 - Nice to have: experience with Looker or another BI tool`;
 
+// Moroccan example: a French CV and a French job advert in Casablanca (the default demo).
+const EXAMPLE_CV_FR = `Yasmine El Idrissi
+yasmine.elidrissi@example.com | +212 6 12 34 56 78 | Casablanca
+
+PROFIL
+Diplômée en gestion (Licence, Université Hassan II, 2024). Stage de 6 mois en service client. Français, arabe et anglais.
+
+EXPÉRIENCE
+Conseillère clientèle (stage) - Centre d'appels Atlas, Casablanca (2024)
+- Traitement de 50 appels par jour en français et en arabe
+- Saisie et suivi des réclamations clients dans le CRM
+- Participation à la formation de 2 nouveaux stagiaires
+
+Vendeuse à temps partiel - Marjane, Casablanca (2022-2023)
+- Encaissement, retours et conseil client
+- Tenue d'un tableau Excel des ruptures de stock du rayon
+
+FORMATION
+Licence en gestion, Université Hassan II (2024)
+
+COMPÉTENCES
+Excel, Word, CRM, communication, français, arabe, anglais`;
+
+const EXAMPLE_JOB_FR = `Chargé(e) de Relation Client Bilingue - Société de livraison e-commerce, Casablanca
+
+Missions :
+- Répondre aux clients par téléphone, e-mail et chat, en français et en arabe
+- Suivre et résoudre les réclamations dans le CRM
+- Produire un reporting hebdomadaire sous Excel (tableaux croisés dynamiques)
+- Remonter les problèmes récurrents à l'équipe opérations
+
+Profil :
+- Bac+2/Bac+3
+- 1 an d'expérience en relation client
+- Maîtrise d'Excel (TCD, RECHERCHEV)
+- Anglais professionnel apprécié
+- Connaissance d'un outil de ticketing (Zendesk, Freshdesk) est un plus`;
+
 /* ---------- network helpers ---------- */
 
 async function postJson(url, payload) {
@@ -392,6 +430,19 @@ function TailorResults({ r }) {
           <strong>Review before you send.</strong> Check every claim is true, and fill in any{" "}
           <code>[placeholders]</code> with real numbers. AI can make mistakes or reflect bias.
           {r.usedBackup ? <BackupNote /> : null}
+          {r.removed && r.removed.emails + r.removed.phones > 0 ? (
+            <span className="removed-note">
+              {" "}
+              {Icon.lock} Removed before sending to the AI:{" "}
+              {[
+                r.removed.emails ? `${r.removed.emails} email${r.removed.emails > 1 ? "s" : ""}` : "",
+                r.removed.phones ? `${r.removed.phones} phone number${r.removed.phones > 1 ? "s" : ""}` : "",
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              .
+            </span>
+          ) : null}
         </p>
       </div>
 
@@ -544,11 +595,22 @@ function TailorTool({ cv, setCv }) {
             className="ghost"
             disabled={loading}
             onClick={() => {
+              setCv(EXAMPLE_CV_FR);
+              setJob(EXAMPLE_JOB_FR);
+            }}
+          >
+            Try an example
+          </button>
+          <button
+            type="button"
+            className="ghost"
+            disabled={loading}
+            onClick={() => {
               setCv(EXAMPLE_CV);
               setJob(EXAMPLE_JOB);
             }}
           >
-            Try an example
+            English example
           </button>
         </div>
         <PrivacyLine />
@@ -704,9 +766,9 @@ function BridgeTool({ cv }) {
             className="ghost"
             disabled={loading}
             onClick={() => {
-              setSkills("Customer service, Zendesk, Excel, training new staff, cash handling, stock counts");
-              setCity("Manchester");
-              setHours("15");
+              setSkills("Customer service, French, Arabic, English, Excel, CRM, cash handling");
+              setCity("Casablanca");
+              setHours("20");
               setHasVehicle(false);
             }}
           >
@@ -820,8 +882,9 @@ function PrivacyLine() {
     <p className="privacy-line">
       {Icon.lock}
       <span>
-        Not stored: your text is sent to Groq&apos;s AI to generate results, then discarded. AI can be wrong or
-        biased, so review everything before sending it to an employer.
+        Not stored: email addresses and phone numbers are removed, then your text is sent to Groq&apos;s AI to
+        generate results and discarded. AI can be wrong or biased, so review everything before sending it to an
+        employer. Answers come back in the job advert&apos;s language.
       </span>
     </p>
   );

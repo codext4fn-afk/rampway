@@ -1,4 +1,4 @@
-import { askGroqForJson, jsonRoute, UserFacingError, str, arr } from "../../../lib/groq";
+import { askGroqForJson, jsonRoute, UserFacingError, str, arr, redactContact } from "../../../lib/groq";
 
 export const maxDuration = 60;
 
@@ -31,8 +31,14 @@ Rules:
     rewrite any claim you cannot point to in the CV.
 - Do not infer or mention age, gender, ethnicity, religion, disability, nationality, family status
   or other protected characteristics, and do not let them influence your advice.
-- Use plain, professional English. No clichés like "synergy" or "rockstar".
-- The cover letter should be 180-250 words, addressed "Dear Hiring Manager," unless a name is given,
+- LANGUAGE: write ALL output (summary, bullets, skills gap, cover letter, questions, tips) in the same
+  language as the job description. A French job advert gets a French application, even if the CV is in
+  English. This applies to EVERY string value, including every rewritten experience bullet: never
+  leave bullets in English when the job is in French. Keep job titles and employer names as they
+  appear in the CV.
+- Use plain, professional language. No clichés like "synergy" or "rockstar".
+- The cover letter should be 180-250 words, addressed with the standard formal greeting for that language
+  ("Dear Hiring Manager," in English, "Madame, Monsieur," in French) unless a name is given,
   and signed with the candidate's name if the CV contains it, otherwise "[Your Name]".
 
 Respond with ONLY a JSON object of exactly this shape:
@@ -55,8 +61,15 @@ List only genuine gaps (requirements the CV does not evidence), most important f
 Give exactly 5 interview questions.`;
 
 export const POST = jsonRoute(async (body) => {
-  const cv = str(body?.cv);
-  const job = str(body?.job);
+  const rawCv = str(body?.cv);
+  const cv = redactContact(rawCv);
+  const job = redactContact(str(body?.job));
+  // Tell the user what was stripped before the AI call, so the privacy step is visible.
+  const count = (s, tag) => s.split(`[${tag} removed]`).length - 1;
+  const removed = {
+    emails: count(cv, "email") - count(rawCv, "email"),
+    phones: count(cv, "phone") - count(rawCv, "phone"),
+  };
 
   if (cv.length < MIN_CHARS) throw new UserFacingError("Please paste your CV (at least a few lines).", 400);
   if (job.length < MIN_CHARS) throw new UserFacingError("Please paste the job description (at least a few lines).", 400);
@@ -69,10 +82,17 @@ export const POST = jsonRoute(async (body) => {
     user: `<cv>\n${cv}\n</cv>\n\n<job_description>\n${job}\n</job_description>`,
     maxTokens: 4500,
     reasoningEffort: "medium",
+    // All four sections must be present; a truncated answer goes to the next retry/model instead.
+    isComplete: (o) =>
+      str(o.tailoredSummary) &&
+      str(o.coverLetter).length > 200 &&
+      arr(o.tailoredExperience).length > 0 &&
+      arr(o.interviewQuestions).length >= 3,
   });
 
   const result = {
     usedBackup: out._usedBackup === true,
+    removed,
     tailoredSummary: str(out.tailoredSummary),
     tailoredExperience: arr(out.tailoredExperience)
       .map((r) => ({ role: str(r?.role), bullets: arr(r?.bullets).map(str).filter(Boolean) }))
