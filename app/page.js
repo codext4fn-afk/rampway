@@ -539,6 +539,7 @@ function TailorTool({ cv, setCv }) {
             Try an example
           </button>
         </div>
+        <PrivacyLine />
       </form>
 
       <div ref={outRef} className="output">
@@ -700,6 +701,7 @@ function BridgeTool({ cv }) {
             Try an example
           </button>
         </div>
+        <PrivacyLine />
       </form>
 
       <div ref={outRef} className="output">
@@ -757,6 +759,61 @@ function BridgeTool({ cv }) {
 
 /* ---------- page ---------- */
 
+// Animated "on-ramp": the line draws itself, milestones A-D appear, and a signal dot climbs to "Hired".
+function HeroArt() {
+  const ramp = "M16 250 H112 L176 186 H240 L304 122 H368 L432 58";
+  const stops = [
+    [112, 250, "A", "CV"],
+    [176, 186, "B", "Gaps"],
+    [240, 186, "C", "Letter"],
+    [304, 122, "D", "Interview", true],
+  ];
+  return (
+    <svg className="hero-art" viewBox="0 0 460 290" role="img" aria-label="A ramp climbing from your CV to getting hired">
+      <g className="grid-lines" aria-hidden="true">
+        {[58, 122, 186, 250].map((y) => (
+          <line key={y} x1="0" x2="460" y1={y} y2={y} />
+        ))}
+      </g>
+      <path className="ramp-shadow" d={ramp} transform="translate(6 6)" />
+      <path className="ramp" d={ramp} pathLength="1" />
+      {stops.map(([x, y, k, label, above], i) => (
+        <g key={k} className="stop" style={{ animationDelay: `${0.9 + i * 0.22}s` }}>
+          <circle cx={x} cy={y} r="13" />
+          <text x={x} y={y + 4} textAnchor="middle" className="stop-k">
+            {k}
+          </text>
+          <text x={x} y={above ? y - 24 : y + 34} textAnchor="middle" className="stop-label">
+            {label}
+          </text>
+        </g>
+      ))}
+      <g className="goal" style={{ animationDelay: "1.9s" }}>
+        <circle cx="432" cy="58" r="17" />
+        <path d="m424 58 6 6 11-12" />
+        <text x="432" y="26" textAnchor="middle" className="stop-label goal-label">
+          Hired
+        </text>
+      </g>
+      <circle className="runner" r="6">
+        <animateMotion dur="5s" begin="2.2s" repeatCount="indefinite" path={ramp} keyPoints="0;1;1" keyTimes="0;0.8;1" calcMode="linear" />
+      </circle>
+    </svg>
+  );
+}
+
+function PrivacyLine() {
+  return (
+    <p className="privacy-line">
+      {Icon.lock}
+      <span>
+        Not stored: your text is sent to Groq&apos;s AI to generate results, then discarded. AI can be wrong or
+        biased, so review everything before sending it to an employer.
+      </span>
+    </p>
+  );
+}
+
 const TABS = [
   { id: "tailor", n: "01", label: "Tailor my CV" },
   { id: "bridge", n: "02", label: "Bridge income" },
@@ -776,33 +833,20 @@ export default function Home() {
           </svg>
           <span>RampWay</span>
         </div>
-        <h1>
-          Get the job.
-          <br />
-          <em>Cover the gap.</em>
-        </h1>
-        <p className="standfirst">
-          Upload your CV and a job advert to get a tailored CV, an honest skills gap, a cover letter and interview
-          prep. Need income while you search? We&apos;ll suggest work you could start this week.
-        </p>
+        <div className="hero">
+          <div className="hero-copy">
+            <h1>
+              <span className="line">Get the job.</span>
+              <em className="line">Cover the gap.</em>
+            </h1>
+            <p className="standfirst">
+              Upload your CV and a job advert to get a tailored CV, an honest skills gap, a cover letter and
+              interview prep. Need income while you search? We&apos;ll suggest work you could start this week.
+            </p>
+          </div>
+          <HeroArt />
+        </div>
       </header>
-
-      <div className="notices">
-        <div className="notice">
-          <span className="notice-icon">{Icon.lock}</span>
-          <p>
-            <strong>Not stored.</strong> What you type or upload is sent to our AI provider (Groq) to generate
-            results, then discarded. No accounts, no database.
-          </p>
-        </div>
-        <div className="notice">
-          <span className="notice-icon">{Icon.scale}</span>
-          <p>
-            <strong>AI can be wrong or biased.</strong> Treat everything as a draft, and check it before you send
-            anything to an employer.
-          </p>
-        </div>
-      </div>
 
       <nav className="tabs" role="tablist" aria-label="Tools">
         {TABS.map((t) => (
